@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  intern-db:
+    build: ./../../intern-db
+    profiles:
+      - core-services
+      - databases
+    ports:
+      - "10002:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-uuser", "-ppassword" ]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  intern-api:
+    build: ./../../intern-api
+    profiles:
+      - core-services
+    ports:
+      - "10001:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+
+    depends_on:
+      intern-db:
+        condition: service_healthy
+
+  intern-service:
+    build: ./../../intern-service
+    profiles:
+      - core-services
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+    ports:
+      - "10000:8080"

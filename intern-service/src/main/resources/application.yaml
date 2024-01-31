@@ -1,0 +1,21 @@
+# Webserver configs
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: never
+    include-exception: false
+
+
+# Feign config (must use together with Logger.Level bean or gg)
+logging:
+  level:
+    com:
+      eniot:
+        intern:
+          api:
+            feign:
+              InternFeignClient: debug
+intern-api:
+  url: http://localhost:8081

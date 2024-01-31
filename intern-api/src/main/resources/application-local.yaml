@@ -1,0 +1,4 @@
+spring:
+  #Datasource connection details
+  datasource:
+    url: jdbc:mysql://intern-onboarding-be-intern-db-1:3306/intern_db

@@ -1,0 +1,355 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.7.9</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>com.eniot.intern</groupId>
+  <artifactId>intern-onboarding-be</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>intern-onboarding-be</name>
+  <modules>
+    <module>intern-api</module>
+    <module>intern-db</module>
+    <module>intern-service</module>
+    <module>common-lib</module>
+  </modules>
+
+  <properties>
+    <java.version>11</java.version>
+    <spring-boot.version>2.7.9</spring-boot.version>
+    <lombok.version>1.18.24</lombok.version>
+    <mysql.version>8.0.32</mysql.version>
+    <testcontainers.version>1.17.6</testcontainers.version>
+    <openfeign.version>3.1.5</openfeign.version>
+    <jackson.version>2.14.2</jackson.version>
+
+    <!-- documentation related -->
+    <!-- note, openapi 1.6.11 uses swagger-core 2.2.2 internally.
+         we need to add swagger-core explicitly just because some internal libs do not need the whole package-->
+    <openapi.version>1.6.11</openapi.version>
+    <swagger-core.version>2.2.2</swagger-core.version>
+
+
+    <!-- build plugins -->
+    <jacoco.version>0.8.8</jacoco.version>
+    <docker-maven.version>0.40.2</docker-maven.version>
+    <dockerfile.repositoryNamePrefix>intern-onboarding-be</dockerfile.repositoryNamePrefix>
+    <dockerfile.repositoryName>root</dockerfile.repositoryName>
+    <dockerfile.repositoryNamespace>sg-gssc</dockerfile.repositoryNamespace>
+    <dockerfile.registry>harbor.eniot.io</dockerfile.registry>
+    <sonar.exclusions>**/*.html</sonar.exclusions>
+    <sonar.issue.ignore.multicriteria>e1</sonar.issue.ignore.multicriteria>
+    <sonar.issue.ignore.multicriteria.e1.ruleKey>findbugs:UPM_UNCALLED_PRIVATE_METHOD
+    </sonar.issue.ignore.multicriteria.e1.ruleKey>
+    <sonar.issue.ignore.multicriteria.e1.resourceKey>
+      **/*.java
+    </sonar.issue.ignore.multicriteria.e1.resourceKey>
+
+  </properties>
+
+  <dependencyManagement>
+
+    <dependencies>
+      <!--BOMS-->
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>${testcontainers.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${jackson.version}</version>
+        <type>pom</type>
+      </dependency>
+
+
+      <!--DB-->
+      <dependency>
+        <groupId>com.mysql</groupId>
+        <artifactId>mysql-connector-j</artifactId>
+        <version>${mysql.version}</version>
+      </dependency>
+
+      <!-- Http clients -->
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-openfeign</artifactId>
+        <version>${openfeign.version}</version>
+      </dependency>
+
+      <!--Documentation-related-->
+      <dependency>
+        <groupId>org.springdoc</groupId>
+        <artifactId>springdoc-openapi-ui</artifactId>
+        <version>${openapi.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.swagger.core.v3</groupId>
+        <artifactId>swagger-annotations</artifactId>
+        <version>${swagger-core.version}</version>
+      </dependency>
+
+      <!--Misc-->
+      <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>${lombok.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <!--Lombok pretty much used everywhere lol-->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>io.fabric8</groupId>
+          <artifactId>docker-maven-plugin</artifactId>
+          <version>${docker-maven.version}</version>
+          <executions>
+            <execution>
+              <id>build</id>
+              <phase>install</phase>
+              <goals>
+                <goal>build</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <verbose>true</verbose>
+            <images>
+              <image>
+                <name>
+                  ${dockerfile.registry}/${dockerfile.repositoryNamespace}/${dockerfile.repositoryNamePrefix}-${dockerfile.repositoryName}
+                </name>
+                <build>
+                  <contextDir>${project.basedir}</contextDir>
+                </build>
+              </image>
+            </images>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          <version>${spring-boot.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>2.0.0</version>
+        <executions>
+          <execution>
+            <id>default-cli</id>
+            <configuration>
+              <fileTemplate>/org/codehaus/mojo/license/third-party-file-groupByLicense.ftl</fileTemplate>
+              <excludedScopes>test</excludedScopes>
+              <excludedGroups>
+                org.testcontainers|com.github.docker-java|com.github.tomakehurst|org.mockito|org.assertj|org.junit|org.junit.jupiter|org.hamcrest
+              </excludedGroups>
+              <excludedArtifacts>spring-boot-starter-test|spring-boot-test|spring-test</excludedArtifacts>
+              <licenseMerges>
+                <licenseMerge>The Apache Software License, Version 2.0|Apache Software License - Version 2.0
+                </licenseMerge>
+                <licenseMerge>The Apache Software License, Version 2.0|The Apache License, Version 2.0</licenseMerge>
+                <licenseMerge>The Apache Software License, Version 2.0|Apache License, Version 2.0</licenseMerge>
+                <licenseMerge>The Apache Software License, Version 2.0|Apache License, version 2.0</licenseMerge>
+                <licenseMerge>The Apache Software License, Version 2.0|Apache License 2.0</licenseMerge>
+                <licenseMerge>The Apache Software License, Version 2.0|Apache License v2.0</licenseMerge>
+                <licenseMerge>The Apache Software License, Version 2.0|Apache 2</licenseMerge>
+                <licenseMerge>The Apache Software License, Version 2.0|Apache 2.0</licenseMerge>
+                <licenseMerge>The Apache Software License, Version 2.0|Apache v2</licenseMerge>
+
+                <licenseMerge>BSD License|The BSD License</licenseMerge>
+                <licenseMerge>BSD License|BSD licence</licenseMerge>
+                <licenseMerge>BSD License|BSD style</licenseMerge>
+                <licenseMerge>BSD License|BSD</licenseMerge>
+
+                <licenseMerge>BSD 2-Clause License|BSD-2-Clause</licenseMerge>
+                <licenseMerge>BSD 3-clause License|BSD 3-clause New License</licenseMerge>
+                <licenseMerge>BSD 3-clause License|The BSD 3-Clause License</licenseMerge>
+
+                <licenseMerge>MIT License|The MIT License (MIT)</licenseMerge>
+                <licenseMerge>MIT License|The MIT License</licenseMerge>
+                <licenseMerge>MIT License|MIT</licenseMerge>
+
+                <licenseMerge>Eclipse Public License 1.0|Eclipse Public License - v 1.0</licenseMerge>
+                <licenseMerge>Eclipse Public License 1.0|Eclipse Public License - Version 1.0</licenseMerge>
+                <licenseMerge>Eclipse Public License 2.0|EPL 2.0</licenseMerge>
+
+                <licenseMerge>Eclipse Distribution License 1.0|Eclipse Distribution License v. 1.0</licenseMerge>
+                <licenseMerge>Eclipse Distribution License 1.0|Eclipse Distribution License - v 1.0</licenseMerge>
+                <licenseMerge>Eclipse Distribution License 1.0|EDL 1.0</licenseMerge>
+
+                <licenseMerge>Public Domain|Public Domain, per Creative Commons CC0</licenseMerge>
+
+                <licenseMerge>LGPL v2.1|GNU Library or Lesser General Public License (LGPL) V2.1</licenseMerge>
+                <licenseMerge>LGPL v2.1|LGPL, version 2.1</licenseMerge>
+                <licenseMerge>LGPL v2.1|LGPL 2.1</licenseMerge>
+                <licenseMerge>LGPL v2.1|GNU Library General Public License v2.1 or later</licenseMerge>
+
+                <licenseMerge>GPL v2 with classpath exception|GNU General Public License, version 2 (GPL2), with the
+                  classpath exception
+                </licenseMerge>
+                <licenseMerge>GPL v2 with classpath exception|GNU General Public License, version 2 with the GNU
+                  Classpath Exception
+                </licenseMerge>
+                <licenseMerge>GPL v2 with classpath exception|GPLv2 with classpath exception</licenseMerge>
+                <licenseMerge>GPL v2 with classpath exception|GPL2 w/ CPE</licenseMerge>
+                <licenseMerge>GPL v2 with classpath exception|GPLv2+CE</licenseMerge>
+
+                <licenseMerge>CDDL|CDDL License</licenseMerge>
+
+                <licenseMerge>CDDL + GPL v2 with classpath exception|CDDL/GPLv2+CE</licenseMerge>
+                <licenseMerge>CDDL + GPL v2 with classpath exception|CDDL + GPLv2 with classpath exception
+                </licenseMerge>
+                <licenseMerge>CDDL 1.1 + GPL v2 with classpath exception|CDDL+GPL License</licenseMerge>
+              </licenseMerges>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <execution>
+            <id>pre-unit-test</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <propertyName>surefire.jacoco.args</propertyName>
+            </configuration>
+          </execution>
+          <execution>
+            <id>pre-integration-test</id>
+            <goals>
+              <goal>prepare-agent-integration</goal>
+            </goals>
+            <configuration>
+              <propertyName>failsafe.jacoco.args</propertyName>
+            </configuration>
+          </execution>
+
+          <!-- Coverage Report Generation Executions for the following:
+               unit-test-coverage-report,
+               integration-test-coverage-report,
+               merged-test-coverage-report -->
+          <execution>
+            <id>post-unit-report</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco-unit-report</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>post-integration-test-report</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco-it.exec</dataFile>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco-integration-report</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>merge-unit-and-integration-report</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>merge</goal>
+            </goals>
+            <configuration>
+              <fileSets>
+                <fileSet>
+                  <directory>${project.build.directory}</directory>/directory>
+                  <includes>
+                    <include>jacoco.exec</include>
+                    <include>jacoco-it.exec</include>
+                  </includes>
+                </fileSet>
+              </fileSets>
+              <destFile>${project.build.directory}/jacoco-merged.exec</destFile>
+            </configuration>
+          </execution>
+          <execution>
+            <id>create-merged-report</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco-merged.exec</dataFile>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco-merged-report</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
+        <configuration>
+          <argLine>${surefire.jacoco.args}</argLine>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${maven-failsafe-plugin.version}</version>
+        <configuration>
+          <argLine>${failsafe.jacoco.args}</argLine>
+          <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.lesfurets</groupId>
+        <artifactId>partial-build-plugin</artifactId>
+        <version>2.7</version>
+        <extensions>true</extensions>
+        <configuration>
+          <enabled>false</enabled>
+          <referenceBranch>refs/remotes/origin/develop</referenceBranch>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-help-plugin</artifactId>
+        <version>${maven-help-plugin.version}</version>
+      </plugin>
+    </plugins>
+  </build>
+</project>
