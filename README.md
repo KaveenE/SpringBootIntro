@@ -1,4 +1,4 @@
-# intern-onboarding-be
+# springboot-onboarding-be
 ## Table of Content
 1. [Introduction](#1-introduction)   
    1.1. [JDK version. Read this first!](#11-jdk-version)
